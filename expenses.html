@@ -19,6 +19,19 @@
             color: white;
         }
 
+        .back-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 10px 20px;
+            background: #f5e8c8;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            color: #4b0e1f;
+            font-weight: bold;
+        }
+
         .container {
             background: rgba(255, 255, 255, 0.15);
             padding: 30px;
@@ -29,6 +42,7 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.4);
             max-height: 85vh;
             overflow-y: auto;
+            margin-top: 50px;
         }
 
         input, select {
@@ -101,14 +115,33 @@
             font-weight: bold;
         }
 
-        .file-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
+        /* BUDGET BAR */
+        .budget-box {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .budget-bar-bg {
+            width: 100%;
+            height: 20px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+
+        .budget-bar-fill {
+            height: 20px;
+            background: #4caf50;
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.4s ease;
         }
     </style>
 </head>
 
 <body>
+
+<button class="back-btn" onclick="window.location.href='index.html'">⬅ Menu</button>
 
 <div class="container">
     <h2>Expense Tracker</h2>
@@ -122,11 +155,24 @@
     <input type="date" id="date">
 
     <div>
-        <label class="file-label">Receipt (optional):</label><br>
+        <label>Receipt (optional):</label><br>
         <input type="file" id="receiptInput" accept="image/*">
     </div>
 
     <button onclick="addExpense()">Add Expense</button>
+
+    <!-- BUDGET BAR -->
+    <div class="budget-box">
+        <label>Monthly Budget:</label>
+        <input type="number" id="budgetInput" placeholder="Set budget">
+        <button onclick="saveBudget()">Save Budget</button>
+
+        <p id="budgetText"></p>
+
+        <div class="budget-bar-bg">
+            <div class="budget-bar-fill" id="budgetBar"></div>
+        </div>
+    </div>
 
     <div id="expenseList"></div>
 
@@ -137,6 +183,7 @@
     const currencies = ["EUR","USD","GBP","CHF","JPY","CNY","TRY","PLN","SEK","NOK","DKK","AUD","CAD"];
     let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
     let selectedCurrency = localStorage.getItem("currency_exp") || "EUR";
+    let budget = parseFloat(localStorage.getItem("budget")) || 0;
     let rates = {};
 
     async function loadRates() {
@@ -177,6 +224,7 @@
     function updateTotal() {
         let total = expenses.reduce((sum, item) => sum + item.amount, 0);
         document.getElementById("total").innerText = `Total: ${selectedCurrency} ${total.toFixed(2)}`;
+        updateBudgetBar(total);
     }
 
     function renderExpenses() {
@@ -221,8 +269,7 @@
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                const receiptData = e.target.result;
-                pushExpense(amount, name, date, receiptData);
+                pushExpense(amount, name, date, e.target.result);
             };
             reader.readAsDataURL(file);
         } else {
@@ -277,14 +324,49 @@
         }
     }
 
+    /* BUDGET SYSTEM */
+    function saveBudget() {
+        const val = parseFloat(document.getElementById("budgetInput").value);
+        if (!val) return;
+        budget = val;
+        localStorage.setItem("budget", budget);
+        updateBudgetBar();
+    }
+
+    function updateBudgetBar(totalSpent = null) {
+        if (totalSpent === null) {
+            totalSpent = expenses.reduce((sum, item) => sum + item.amount, 0);
+        }
+
+        const bar = document.getElementById("budgetBar");
+        const text = document.getElementById("budgetText");
+
+        if (budget <= 0) {
+            text.innerText = "No budget set";
+            bar.style.width = "0%";
+            bar.style.background = "#4caf50";
+            return;
+        }
+
+        const percent = Math.min((totalSpent / budget) * 100, 100);
+        bar.style.width = percent + "%";
+
+        if (percent < 70) bar.style.background = "#4caf50";
+        else if (percent < 100) bar.style.background = "#ffcc00";
+        else bar.style.background = "#ff4444";
+
+        text.innerText = `Budget: ${selectedCurrency} ${budget.toFixed(2)} — Spent: ${selectedCurrency} ${totalSpent.toFixed(2)}`;
+    }
+
     (async () => {
         await loadRates();
         populateCurrencyDropdown();
         importFromShoppingList();
         renderExpenses();
+        updateBudgetBar();
     })();
 </script>
 
 </body>
 </html>
-                
+        
