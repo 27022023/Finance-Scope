@@ -1,216 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Finance Scope</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Scope</title>
 
-<style>
-/* GLOBAL */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #d9d9d9, #b3b8d9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
 
-body {
-    background: #dcdcdc; /* soft grey */
-    font-family: Arial, sans-serif;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+        /* BIG BANK EMOJI */
+        .big-emoji {
+            font-size: 180px;
+            position: relative;
+            text-align: center;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.7));
+            margin-bottom: -20px;
+        }
 
-/* TITLE */
-.title {
-    margin-top: 6vh;
-    font-size: 10vw;
-    font-weight: 700;
-    color: #0A1A2F; /* deep navy */
-    text-align: center;
-}
+        /* FINANCE SCOPE TEXT ON TOP OF EMOJI */
+        .emoji-logo-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 26px;
+            font-weight: bold;
+            color: #0a1a3d;
+            text-shadow: 0 0 10px rgba(255,255,255,0.9);
+            pointer-events: none;
+            white-space: nowrap;
+        }
 
-/* BANK ILLUSTRATION WRAPPER */
-.bank-wrapper {
-    margin-top: 4vh;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-}
+        h1 {
+            color: #0a1a3d;
+            font-weight: 600;
+            font-size: 3rem;
+            text-align: center;
+            margin-top: 10px;
+        }
 
-/* BANK BUILDING */
-.bank-building {
-    width: 60vw;
-    height: 50vw;
-    background: #ffffff;
-    border-radius: 3vw;
-    position: relative;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    padding-top: 12vw;
-}
+        .swipe-btn {
+            position: absolute;
+            bottom: 30px;
+            background-color: #f5e8c8;
+            padding: 15px 25px;
+            border-radius: 30px;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
 
-/* ROOF */
-.bank-roof {
-    position: absolute;
-    top: -10vw;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 70vw;
-    height: 14vw;
-    background: linear-gradient(#e8e8e8, #bfbfbf);
-    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-    border-radius: 1vw;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
+        .swipe-btn:hover {
+            background-color: #f0dfb5;
+        }
 
-/* GOLD ENGRAVED LOGO */
-.bank-logo {
-    text-align: center;
-    font-size: 4.5vw;
-    font-weight: 700;
-    color: #d4af37; /* gold */
-    text-shadow:
-        0 0 3px #b8860b,
-        0 0 6px #b8860b,
-        inset 0 0 5px #b8860b;
-    margin-bottom: 4vw;
-}
+        /* MENU PANEL */
+        #menu {
+            position: absolute;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            height: 100%;
+            background-color: #f5e8c8;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+            padding: 30px;
+            transition: right 0.4s ease;
+        }
 
-/* COLUMNS */
-.bank-columns {
-    display: flex;
-    justify-content: space-evenly;
-    margin-top: 2vw;
-}
+        #menu h2 {
+            margin-top: 0;
+        }
 
-.col {
-    width: 7vw;
-    height: 22vw;
-    background: #e8e8e8;
-    border-radius: 2vw;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
-}
-
-/* STEPS */
-.bank-steps {
-    width: 75%;
-    height: 7vw;
-    background: #dcdcdc;
-    border-radius: 2vw;
-    position: absolute;
-    bottom: -5vw;
-    left: 50%;
-    transform: translateX(-50%);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
-
-/* MENU BUTTON */
-.menu-btn {
-    position: absolute;
-    bottom: 30px;
-    padding: 15px 25px;
-    background-color: #FFF5E1; /* cream */
-    border: none;
-    border-radius: 12px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-
-/* MENU PANEL */
-#menuPanel {
-    position: fixed;
-    bottom: -100%;
-    left: 0;
-    width: 100%;
-    height: 60%;
-    background-color: #FFF5E1;
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
-    transition: bottom 0.4s ease;
-    padding: 20px;
-}
-
-#menuPanel h2 {
-    margin-top: 0;
-    color: #0A1A2F;
-    text-align: center;
-}
-
-.menu-item {
-    padding: 12px;
-    margin: 10px 0;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    cursor: pointer;
-    font-size: 1.1rem;
-}
-</style>
+        .menu-item {
+            margin: 15px 0;
+            font-size: 1.2rem;
+        }
+    </style>
 </head>
 
 <body>
 
-<!-- TITLE -->
-<div class="title">FINANCE SCOPE</div>
-
-<!-- BANK ILLUSTRATION -->
-<div class="bank-wrapper">
-    <div class="bank-building">
-        <div class="bank-roof"></div>
-        <div class="bank-logo">FINANCE SCOPE</div>
-        <div class="bank-columns">
-            <div class="col"></div>
-            <div class="col"></div>
-            <div class="col"></div>
-        </div>
-        <div class="bank-steps"></div>
+    <!-- BIG BANK EMOJI WITH FINANCE SCOPE TEXT -->
+    <div class="big-emoji">
+        🏦
+        <div class="emoji-logo-text">Finance Scope</div>
     </div>
-</div>
 
-<!-- MENU BUTTON -->
-<button class="menu-btn" onclick="openMenu()">Menu</button>
+    <h1>Finance Scope</h1>
 
-<!-- MENU PANEL -->
-<div id="menuPanel">
-    <h2>Menu</h2>
+    <button class="swipe-btn" onclick="openMenu()">
+        💸 Swipe to see the menu!
+    </button>
 
-    <div class="menu-item" onclick="location.href='currency.html'">Currency Converter</div>
-    <div class="menu-item" onclick="location.href='brutto-netto.html'">Brutto–Netto Calculator</div>
-    <div class="menu-item" onclick="location.href='expenses.html'">Expense Tracker</div>
-    <div class="menu-item" onclick="location.href='receipts.html'">Receipt Upload</div>
-    <div class="menu-item" onclick="location.href='shopping-list.html'">Shopping List</div>
-    <div class="menu-item" onclick="location.href='bills.html'">Bills & Payments</div>
-    <div class="menu-item" onclick="location.href='goals.html'">Savings Goals</div>
-</div>
+    <div id="menu">
+        <h2>Menu</h2>
+        <div class="menu-item"><a href="currency.html">Currency Converter</a></div>
+        <div class="menu-item"><a href="brutto-netto.html">Brutto-Netto Calculator</a></div>
+        <div class="menu-item"><a href="expenses.html">Expense Tracker</a></div>
+        <div class="menu-item"><a href="shopping-list.html">Shopping List</a></div>
+        <div class="menu-item"><a href="bills.html">Bills Checklist</a></div>
+    </div>
 
-<script>
-const menu = document.getElementById("menuPanel");
+    <script>
+        function openMenu() {
+            document.getElementById("menu").style.right = "0";
+        }
 
-function openMenu() {
-    menu.style.bottom = "0";
-}
+        // Swipe detection
+        let startX = 0;
 
-function closeMenu() {
-    menu.style.bottom = "-100%";
-}
+        document.addEventListener("touchstart", e => {
+            startX = e.touches[0].clientX;
+        });
 
-/* SWIPE DETECTION */
-let startY = 0;
-let endY = 0;
-
-document.addEventListener("touchstart", e => {
-    startY = e.touches[0].clientY;
-});
-
-document.addEventListener("touchend", e => {
-    endY = e.changedTouches[0].clientY;
-
-    let swipe = startY - endY;
-
-    if (swipe > 80) openMenu();
-    if (swipe < -80) closeMenu();
-});
-</script>
+        document.addEventListener("touchend", e => {
+            let endX = e.changedTouches[0].clientX;
+            if (startX < endX - 50) {
+                openMenu();
+            }
+        });
+    </script>
 
 </body>
 </html>
-
         
