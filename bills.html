@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bills Manager</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f3e9d7; /* soft beige aesthetic */
+            color: #4b3f32;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            padding: 10px 20px;
+            background: #e8d7bd;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            color: #4b3f32;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .container {
+            margin-top: 70px;
+            width: 90%;
+            max-width: 550px;
+            background: #fff8ef;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.15);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            border: 1px solid #d8c7b3;
+            font-size: 1rem;
+            background: #fffdf9;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #e8d7bd;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        .bill-card {
+            background: #fffdf9;
+            border: 2px solid #e0d2c0;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .bill-card.overdue {
+            border-color: #ff6b6b;
+        }
+
+        .bill-card.soon {
+            border-color: #ffcc66;
+        }
+
+        .bill-card.paid {
+            border-color: #8fd19e;
+            opacity: 0.8;
+        }
+
+        .bill-actions {
+            margin-top: 10px;
+        }
+
+        .bill-actions button {
+            margin-right: 10px;
+        }
+
+        .color-row {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .preset-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #c9b8a3;
+        }
+
+        .reminder-banner {
+            background: #ffe9c7;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #e0c9a8;
+        }
+    </style>
+</head>
+
+<body>
+
+<button class="back-btn" onclick="window.location.href='index.html'">⬅ Menu</button>
+
+<div class="container">
+    <h2>Bills Manager</h2>
+
+    <h3>Add a Bill</h3>
+
+    <input type="text" id="billName" placeholder="Bill name (e.g., Rent)">
+    <input type="number" id="billAmount" placeholder="Amount">
+    <select id="billCurrency"></select>
+    <input type="date" id="billDue">
+    <textarea id="billNotes" placeholder="Notes (optional)"></textarea>
+
+    <label>Repeats Monthly:</label>
+    <select id="billRepeat">
+        <option value="no">No</option>
+        <option value="yes">Yes</option>
+    </select>
+
+    <label>Reminder:</label>
+    <select id="billReminder">
+        <option value="none">No reminder</option>
+        <option value="1">1 day before</option>
+        <option value="3">3 days before</option>
+        <option value="7">7 days before</option>
+        <option value="14">14 days before</option>
+    </select>
+
+    <label>Choose a color:</label>
+    <div class="color-row">
+        <div class="preset-color" style="background:#ffd1dc" onclick="setColor('#ffd1dc')"></div>
+        <div class="preset-color" style="background:#d1e8ff" onclick="setColor('#d1e8ff')"></div>
+        <div class="preset-color" style="background:#d4ffd8" onclick="setColor('#d4ffd8')"></div>
+        <div class="preset-color" style="background:#fff4c2" onclick="setColor('#fff4c2')"></div>
+        <div class="preset-color" style="background:#f3e9d7" onclick="setColor('#f3e9d7')"></div>
+    </div>
+
+    <input type="color" id="billColor">
+
+    <button onclick="addBill()">Add Bill</button>
+
+    <h3>Upcoming Bills</h3>
+    <div id="reminderArea"></div>
+    <div id="billList"></div>
+
+    <h3>Paid Bills</h3>
+    <div id="paidList"></div>
+</div>
+
+<script>
+    const currencies = ["EUR","USD","GBP","CHF","JPY","CNY","TRY","PLN","SEK","NOK","DKK","AUD","CAD"];
+    let bills = JSON.parse(localStorage.getItem("bills")) || [];
+    let selectedCurrency = "EUR";
+    let rates = {};
+
+    async function loadRates() {
+        const res = await fetch(`https://api.exchangerate.host/latest?base=EUR`);
+        const data = await res.json();
+        rates = data.rates;
+    }
+
+    function populateCurrencyDropdown() {
+        const dropdown = document.getElementById("billCurrency");
+        dropdown.innerHTML = "";
+        currencies.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c;
+            opt.textContent = c;
+            dropdown.appendChild(opt);
+        });
+    }
+
+    function setColor(color) {
+        document.getElementById("billColor").value = color;
+    }
+
+    function saveBills() {
+        localStorage.setItem("bills", JSON.stringify(bills));
+    }
+
+    function addBill() {
+        const name = document.getElementById("billName").value;
+        const amount = parseFloat(document.getElementById("billAmount").value);
+        const currency = document.getElementById("billCurrency").value;
+        const due = document.getElementById("billDue").value;
+        const notes = document.getElementById("billNotes").value;
+        const repeat = document.getElementById("billRepeat").value;
+        const reminder = document.getElementById("billReminder").value;
+        const color = document.getElementById("billColor").value;
+
+        if (!name || !amount || !due) {
+            alert("Please fill in name, amount, and due date");
+            return;
+        }
+
+        bills.push({
+            name, amount, currency, due, notes, repeat, reminder, color,
+            paid: false
+        });
+
+        saveBills();
+        renderBills();
+
+        document.getElementById("billName").value = "";
+        document.getElementById("billAmount").value = "";
+        document.getElementById("billNotes").value = "";
+    }
+
+    function markPaid(index) {
+        const bill = bills[index];
+        bill.paid = true;
+
+        if (bill.repeat === "yes") {
+            const nextMonth = new Date(bill.due);
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+            bills.push({
+                ...bill,
+                due: nextMonth.toISOString().split("T")[0],
+                paid: false
+            });
+        }
+
+        saveBills();
+        renderBills();
+    }
+
+    function deleteBill(index) {
+        bills.splice(index, 1);
+        saveBills();
+        renderBills();
+    }
+
+    function renderBills() {
+        const list = document.getElementById("billList");
+        const paidList = document.getElementById("paidList");
+        const reminderArea = document.getElementById("reminderArea");
+
+        list.innerHTML = "";
+        paidList.innerHTML = "";
+        reminderArea.innerHTML = "";
+
+        const today = new Date();
+
+        bills.forEach((bill, index) => {
+            const dueDate = new Date(bill.due);
+            const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+            let card = document.createElement("div");
+            card.className = "bill-card";
+            card.style.borderColor = bill.color;
+            card.style.background = bill.color + "33";
+
+            if (bill.paid) {
+                card.classList.add("paid");
+            } else if (diffDays < 0) {
+                card.classList.add("overdue");
+            } else if (diffDays <= 3) {
+                card.classList.add("soon");
+            }
+
+            card.innerHTML = `
+                <strong>🧾 ${bill.name}</strong><br>
+                <div>Amount: ${bill.currency} ${bill.amount.toFixed(2)}</div>
+                <div>Due: ${bill.due}</div>
+                <div>Reminder: ${bill.reminder === "none" ? "None" : bill.reminder + " days before"}</div>
+                ${bill.notes ? `<div>Notes: ${bill.notes}</div>` : ""}
+                <div class="bill-actions">
+                    ${!bill.paid ? `<button onclick="markPaid(${index})">Mark Paid</button>` : ""}
+                    <button onclick="deleteBill(${index})">Delete</button>
+                </div>
+            `;
+
+            if (!bill.paid) list.appendChild(card);
+            else paidList.appendChild(card);
+
+            if (!bill.paid && bill.reminder !== "none" && diffDays == bill.reminder) {
+                let banner = document.createElement("div");
+                banner.className = "reminder-banner";
+                banner.innerText = `${bill.name} is due in ${diffDays} days`;
+                reminderArea.appendChild(banner);
+
+                if (Notification.permission === "granted") {
+                    new Notification(`${bill.name} is due soon`, {
+                        body: `Due in ${diffDays} days`,
+                        icon: ""
+                    });
+                }
+            }
+        });
+    }
+
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+
+    (async () => {
+        await loadRates();
+        populateCurrencyDropdown();
+        renderBills();
+    })();
+</script>
+
+</body>
+</html>
