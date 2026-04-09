@@ -32,22 +32,38 @@
         }
 
         input, select {
-            width: 90%;
             padding: 12px;
-            margin: 10px 0;
             border-radius: 10px;
             border: none;
             font-size: 1.1rem;
+            width: 90%;
+            margin: 10px 0;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            width: 90%;
+            margin: 10px auto;
+        }
+
+        input[type="number"] {
+            flex: 1;
+        }
+
+        select {
+            width: 90px;
         }
 
         button {
-            padding: 15px 30px;
+            padding: 10px 20px;
             background-color: #f5e8c8;
             border: none;
-            border-radius: 30px;
-            font-size: 1.2rem;
+            border-radius: 20px;
+            font-size: 1rem;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 8px;
         }
 
         .expense-item {
@@ -68,24 +84,47 @@
             margin-top: 8px;
         }
 
+        .receipt-btn {
+            background: #f5e8c8;
+            color: #4b0e1f;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 6px;
+            margin-right: 6px;
+        }
+
         #total {
             margin-top: 20px;
             font-size: 1.3rem;
             font-weight: bold;
+        }
+
+        .file-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
         }
     </style>
 </head>
 
 <body>
 
-<button class="back-btn" onclick="window.location.href='index.html'">⬅ Back</button>
-
 <div class="container">
     <h2>Expense Tracker</h2>
 
-    <input type="number" id="brutto" placeholder="Enter expense amount (€)">
+    <div class="row">
+        <input type="number" id="amount" placeholder="Amount">
+        <select id="currency"></select>
+    </div>
+
     <input type="text" id="name" placeholder="Expense name">
     <input type="date" id="date">
+
+    <div>
+        <label class="file-label">Receipt (optional):</label><br>
+        <input type="file" id="receiptInput" accept="image/*">
+    </div>
 
     <button onclick="addExpense()">Add Expense</button>
 
@@ -95,7 +134,41 @@
 </div>
 
 <script>
+    const currencies = ["EUR","USD","GBP","CHF","JPY","CNY","TRY","PLN","SEK","NOK","DKK","AUD","CAD"];
     let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+    let selectedCurrency = localStorage.getItem("currency_exp") || "EUR";
+    let rates = {};
+
+    async function loadRates() {
+        const res = await fetch(`https://api.exchangerate.host/latest?base=EUR`);
+        const data = await res.json();
+        rates = data.rates;
+    }
+
+    function populateCurrencyDropdown() {
+        const dropdown = document.getElementById("currency");
+        dropdown.innerHTML = "";
+        currencies.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c;
+            opt.textContent = c;
+            if (c === selectedCurrency) opt.selected = true;
+            dropdown.appendChild(opt);
+        });
+    }
+
+    function convertAllExpenses(newCurrency) {
+        const factor = rates[newCurrency] / rates[selectedCurrency];
+        expenses = expenses.map(e => ({ ...e, amount: e.amount * factor }));
+        selectedCurrency = newCurrency;
+        localStorage.setItem("currency_exp", selectedCurrency);
+        saveExpenses();
+        renderExpenses();
+    }
+
+    document.getElementById("currency").addEventListener("change", e => {
+        convertAllExpenses(e.target.value);
+    });
 
     function saveExpenses() {
         localStorage.setItem("expenses", JSON.stringify(expenses));
@@ -103,7 +176,7 @@
 
     function updateTotal() {
         let total = expenses.reduce((sum, item) => sum + item.amount, 0);
-        document.getElementById("total").innerText = `Total: €${total.toFixed(2)}`;
+        document.getElementById("total").innerText = `Total: ${selectedCurrency} ${total.toFixed(2)}`;
     }
 
     function renderExpenses() {
@@ -114,10 +187,16 @@
             const div = document.createElement("div");
             div.className = "expense-item";
 
+            let receiptButton = "";
+            if (item.receipt) {
+                receiptButton = `<button class="receipt-btn" onclick="viewReceipt(${index})">View receipt</button>`;
+            }
+
             div.innerHTML = `
                 <strong>${item.name}</strong><br>
-                €${item.amount.toFixed(2)}<br>
+                ${selectedCurrency} ${item.amount.toFixed(2)}<br>
                 <small>${item.date}</small><br>
+                ${receiptButton}
                 <button class="delete-btn" onclick="deleteExpense(${index})">Delete</button>
             `;
 
@@ -128,21 +207,38 @@
     }
 
     function addExpense() {
-        const amount = parseFloat(document.getElementById("brutto").value);
+        const amount = parseFloat(document.getElementById("amount").value);
         const name = document.getElementById("name").value;
         const date = document.getElementById("date").value || "No date";
+        const fileInput = document.getElementById("receiptInput");
+        const file = fileInput.files[0];
 
         if (!amount || !name) {
             alert("Enter name and amount");
             return;
         }
 
-        expenses.unshift({ name, amount, date });
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const receiptData = e.target.result;
+                pushExpense(amount, name, date, receiptData);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            pushExpense(amount, name, date, null);
+        }
+    }
+
+    function pushExpense(amount, name, date, receiptData) {
+        expenses.unshift({ name, amount, date, receipt: receiptData });
         saveExpenses();
         renderExpenses();
 
-        document.getElementById("brutto").value = "";
+        document.getElementById("amount").value = "";
         document.getElementById("name").value = "";
+        document.getElementById("date").value = "";
+        document.getElementById("receiptInput").value = "";
     }
 
     function deleteExpense(index) {
@@ -151,20 +247,44 @@
         renderExpenses();
     }
 
+    function viewReceipt(index) {
+        const exp = expenses[index];
+        if (exp && exp.receipt) {
+            const win = window.open();
+            win.document.write(`<img src="${exp.receipt}" style="max-width:100%;height:auto;">`);
+        }
+    }
+
     function importFromShoppingList() {
         let imported = JSON.parse(localStorage.getItem("importExpenses")) || [];
 
         if (imported.length > 0) {
-            imported.forEach(item => expenses.unshift(item));
+            imported.forEach(item => {
+                const fromCurrency = item.currency || "EUR";
+                const factor = rates[selectedCurrency] / rates[fromCurrency];
+                let convertedAmount = item.amount * factor;
+
+                expenses.unshift({
+                    name: item.name,
+                    amount: convertedAmount,
+                    date: item.date,
+                    receipt: null
+                });
+            });
+
             localStorage.removeItem("importExpenses");
             saveExpenses();
         }
     }
 
-    importFromShoppingList();
-    renderExpenses();
+    (async () => {
+        await loadRates();
+        populateCurrencyDropdown();
+        importFromShoppingList();
+        renderExpenses();
+    })();
 </script>
 
 </body>
 </html>
-                        
+                
