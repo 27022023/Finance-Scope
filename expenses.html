@@ -11,7 +11,7 @@
             padding: 0;
             font-family: Arial, sans-serif;
             height: 100vh;
-            background: #4b0e1f; /* deep burgundy */
+            background: #4b0e1f;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -24,7 +24,7 @@
             padding: 30px;
             border-radius: 20px;
             width: 90%;
-            max-width: 500px;
+            max-width: 480px;
             text-align: center;
             box-shadow: 0 0 20px rgba(0,0,0,0.4);
             max-height: 85vh;
@@ -47,27 +47,7 @@
             border-radius: 30px;
             font-size: 1.2rem;
             cursor: pointer;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background-color: #f0dfb5;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 12px 25px;
-            font-size: 1rem;
-            background-color: #f5e8c8;
-            border-radius: 20px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .back-btn:hover {
-            background-color: #f0dfb5;
+            margin-top: 15px;
         }
 
         .expense-item {
@@ -75,6 +55,7 @@
             padding: 12px;
             border-radius: 12px;
             margin: 10px 0;
+            text-align: left;
         }
 
         .delete-btn {
@@ -87,16 +68,6 @@
             margin-top: 8px;
         }
 
-        .delete-btn:hover {
-            background: #ff4a4a;
-        }
-
-        .receipt-img {
-            width: 100%;
-            margin-top: 10px;
-            border-radius: 10px;
-        }
-
         #total {
             margin-top: 20px;
             font-size: 1.3rem;
@@ -107,146 +78,93 @@
 
 <body>
 
-    <button class="back-btn" onclick="window.location.href='index.html'">⬅ Back</button>
+<button class="back-btn" onclick="window.location.href='index.html'">⬅ Back</button>
 
-    <div class="container">
-        <h2>Expense Tracker</h2>
+<div class="container">
+    <h2>Expense Tracker</h2>
 
-        <input type="text" id="name" placeholder="Expense name">
-        <input type="number" id="amount" placeholder="Amount (€)">
-        
-        <select id="category">
-            <option value="General">General</option>
-            <option value="Food">Food</option>
-            <option value="Transport">Transport</option>
-            <option value="Shopping">Shopping</option>
-            <option value="Bills">Bills</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="Health">Health</option>
-        </select>
+    <input type="number" id="brutto" placeholder="Enter expense amount (€)">
+    <input type="text" id="name" placeholder="Expense name">
+    <input type="date" id="date">
 
-        <input type="date" id="date">
+    <button onclick="addExpense()">Add Expense</button>
 
-        <label style="margin-top:10px;">Upload Receipt:</label>
-        <input type="file" id="receipt" accept="image/*">
+    <div id="expenseList"></div>
 
-        <button onclick="addExpense()">Add Expense</button>
+    <div id="total">Total: €0.00</div>
+</div>
 
-        <h3 style="margin-top:20px;">Filter by Month</h3>
-        <select id="monthFilter" onchange="renderExpenses()">
-            <option value="all">All</option>
-            <option value="01">January</option>
-            <option value="02">February</option>
-            <option value="03">March</option>
-            <option value="04">April</option>
-            <option value="05">May</option>
-            <option value="06">June</option>
-            <option value="07">July</option>
-            <option value="08">August</option>
-            <option value="09">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
-        </select>
+<script>
+    let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 
-        <div id="expenseList"></div>
+    function saveExpenses() {
+        localStorage.setItem("expenses", JSON.stringify(expenses));
+    }
 
-        <div id="total">Total: €0.00</div>
-    </div>
+    function updateTotal() {
+        let total = expenses.reduce((sum, item) => sum + item.amount, 0);
+        document.getElementById("total").innerText = `Total: €${total.toFixed(2)}`;
+    }
 
-    <script>
-        let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+    function renderExpenses() {
+        const list = document.getElementById("expenseList");
+        list.innerHTML = "";
 
-        function saveExpenses() {
-            localStorage.setItem("expenses", JSON.stringify(expenses));
+        expenses.forEach((item, index) => {
+            const div = document.createElement("div");
+            div.className = "expense-item";
+
+            div.innerHTML = `
+                <strong>${item.name}</strong><br>
+                €${item.amount.toFixed(2)}<br>
+                <small>${item.date}</small><br>
+                <button class="delete-btn" onclick="deleteExpense(${index})">Delete</button>
+            `;
+
+            list.appendChild(div);
+        });
+
+        updateTotal();
+    }
+
+    function addExpense() {
+        const amount = parseFloat(document.getElementById("brutto").value);
+        const name = document.getElementById("name").value;
+        const date = document.getElementById("date").value || "No date";
+
+        if (!amount || !name) {
+            alert("Enter name and amount");
+            return;
         }
 
-        function updateTotal(filtered) {
-            let total = filtered.reduce((sum, item) => sum + item.amount, 0);
-            document.getElementById("total").innerText = `Total: €${total.toFixed(2)}`;
-        }
-
-        function renderExpenses() {
-            const list = document.getElementById("expenseList");
-            list.innerHTML = "";
-
-            const filter = document.getElementById("monthFilter").value;
-
-            const filtered = expenses.filter(item => {
-                if (filter === "all") return true;
-                return item.date.slice(5, 7) === filter;
-            });
-
-            filtered.forEach((item, index) => {
-                const div = document.createElement("div");
-                div.className = "expense-item";
-
-                div.innerHTML = `
-                    <strong>${item.name}</strong><br>
-                    €${item.amount.toFixed(2)} — ${item.category}<br>
-                    <small>${item.date}</small><br>
-                `;
-
-                if (item.receipt) {
-                    const img = document.createElement("img");
-                    img.src = item.receipt;
-                    img.className = "receipt-img";
-                    div.appendChild(img);
-                }
-
-                const del = document.createElement("button");
-                del.className = "delete-btn";
-                del.innerText = "Delete";
-                del.onclick = () => deleteExpense(index);
-
-                div.appendChild(del);
-                list.appendChild(div);
-            });
-
-            updateTotal(filtered);
-        }
-
-        function addExpense() {
-            const name = document.getElementById("name").value;
-            const amount = parseFloat(document.getElementById("amount").value);
-            const category = document.getElementById("category").value;
-            const date = document.getElementById("date").value || "No date";
-            const receiptFile = document.getElementById("receipt").files[0];
-
-            if (!name || !amount) {
-                alert("Please enter a name and amount");
-                return;
-            }
-
-            if (receiptFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    saveExpense(name, amount, category, date, e.target.result);
-                };
-                reader.readAsDataURL(receiptFile);
-            } else {
-                saveExpense(name, amount, category, date, null);
-            }
-        }
-
-        function saveExpense(name, amount, category, date, receipt) {
-            expenses.push({ name, amount, category, date, receipt });
-            saveExpenses();
-            renderExpenses();
-
-            document.getElementById("name").value = "";
-            document.getElementById("amount").value = "";
-            document.getElementById("receipt").value = "";
-        }
-
-        function deleteExpense(index) {
-            expenses.splice(index, 1);
-            saveExpenses();
-            renderExpenses();
-        }
-
+        expenses.unshift({ name, amount, date });
+        saveExpenses();
         renderExpenses();
-    </script>
+
+        document.getElementById("brutto").value = "";
+        document.getElementById("name").value = "";
+    }
+
+    function deleteExpense(index) {
+        expenses.splice(index, 1);
+        saveExpenses();
+        renderExpenses();
+    }
+
+    function importFromShoppingList() {
+        let imported = JSON.parse(localStorage.getItem("importExpenses")) || [];
+
+        if (imported.length > 0) {
+            imported.forEach(item => expenses.unshift(item));
+            localStorage.removeItem("importExpenses");
+            saveExpenses();
+        }
+    }
+
+    importFromShoppingList();
+    renderExpenses();
+</script>
 
 </body>
 </html>
+                        
