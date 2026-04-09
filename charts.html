@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charts</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #d9ecff;
+            font-family: Arial, sans-serif;
+            color: #2a3b4c;
+        }
+
+        .menu-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            padding: 10px 20px;
+            background: #bcd9ff;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 70px;
+            font-size: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px auto;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+<button class="menu-btn" onclick="window.location.href='index.html'">⬅ Menu</button>
+
+<h1>📊 Monthly Charts</h1>
+
+<div class="chart-card">
+    <h2>📈 Monthly Spending</h2>
+    <canvas id="spendingChart"></canvas>
+</div>
+
+<div class="chart-card">
+    <h2>🍩 Expense Categories</h2>
+    <canvas id="categoryChart"></canvas>
+</div>
+
+<div class="chart-card">
+    <h2>📊 Bills Paid vs Unpaid</h2>
+    <canvas id="billsChart"></canvas>
+</div>
+
+<script>
+    const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+    const bills = JSON.parse(localStorage.getItem("bills")) || [];
+
+    // Spending Line Chart
+    const spendingByDay = {};
+    expenses.forEach(e => {
+        const day = e.date || "Unknown";
+        spendingByDay[day] = (spendingByDay[day] || 0) + parseFloat(e.amount || 0);
+    });
+
+    new Chart(document.getElementById("spendingChart"), {
+        type: "line",
+        data: {
+            labels: Object.keys(spendingByDay),
+            datasets: [{
+                label: "Spending",
+                data: Object.values(spendingByDay),
+                borderColor: "#6aa9ff",
+                backgroundColor: "#6aa9ff55",
+                tension: 0.4
+            }]
+        }
+    });
+
+    // Category Donut Chart
+    const categories = {};
+    expenses.forEach(e => {
+        const cat = e.category || "Other";
+        categories[cat] = (categories[cat] || 0) + parseFloat(e.amount || 0);
+    });
+
+    new Chart(document.getElementById("categoryChart"), {
+        type: "doughnut",
+        data: {
+            labels: Object.keys(categories),
+            datasets: [{
+                data: Object.values(categories),
+                backgroundColor: ["#a7c8ff", "#c7ddff", "#8fbaff", "#dceaff", "#b3d1ff"]
+            }]
+        }
+    });
+
+    // Bills Bar Chart
+    const paid = bills.filter(b => b.paid).length;
+    const unpaid = bills.filter(b => !b.paid).length;
+
+    new Chart(document.getElementById("billsChart"), {
+        type: "bar",
+        data: {
+            labels: ["Paid", "Unpaid"],
+            datasets: [{
+                data: [paid, unpaid],
+                backgroundColor: ["#8fd19e", "#6aa9ff"]
+            }]
+        }
+    });
+</script>
+
+</body>
+</html>
