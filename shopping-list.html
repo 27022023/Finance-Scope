@@ -19,6 +19,19 @@
             color: white;
         }
 
+        .back-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 10px 20px;
+            background: #f5e8c8;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            color: #4b0e1f;
+            font-weight: bold;
+        }
+
         .container {
             background: rgba(255, 255, 255, 0.15);
             padding: 30px;
@@ -29,6 +42,7 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.4);
             max-height: 85vh;
             overflow-y: auto;
+            margin-top: 50px;
         }
 
         input, select {
@@ -95,15 +109,16 @@
 
 <body>
 
+<button class="back-btn" onclick="window.location.href='index.html'">⬅ Menu</button>
+
 <div class="container">
     <h2>Shopping List</h2>
 
-    <input type="text" id="store" placeholder="Store (e.g. Lidl, Aldi)">
-
+    <input type="text" id="store" placeholder="Store (optional)">
     <input type="text" id="itemName" placeholder="Item name">
 
     <div class="row">
-        <input type="number" id="price" placeholder="Price">
+        <input type="number" id="price" placeholder="Price (optional)">
         <select id="currency"></select>
     </div>
 
@@ -111,7 +126,7 @@
 
     <div id="list"></div>
 
-    <div id="total">Total: €0.00</div>
+    <div id="total">Total: 0.00</div>
 
     <button onclick="sendToExpenses()">Send Checked Items to Expenses</button>
     <button onclick="shareList()">Share List</button>
@@ -153,7 +168,7 @@
 
     function convertAllPrices(newCurrency) {
         const factor = rates[newCurrency] / rates[selectedCurrency];
-        items = items.map(i => ({ ...i, price: i.price * factor }));
+        items = items.map(i => ({ ...i, price: i.price ? i.price * factor : null }));
         selectedCurrency = newCurrency;
         localStorage.setItem("currency", selectedCurrency);
         save();
@@ -182,11 +197,13 @@
             const div = document.createElement("div");
             div.className = "item";
 
+            let priceLine = item.price ? `<small>${selectedCurrency} ${item.price.toFixed(2)}</small><br>` : "";
+
             div.innerHTML = `
                 <input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleCheck(${index})">
                 <strong>${item.name}</strong><br>
-                <small>Store: ${item.store || "—"}</small><br>
-                <small>Price: ${selectedCurrency} ${item.price.toFixed(2)}</small>
+                ${item.store ? `<small>Store: ${item.store}</small><br>` : ""}
+                ${priceLine}
                 <button class="delete-btn" onclick="deleteItem(${index})">Delete</button>
             `;
 
@@ -200,10 +217,11 @@
     function addItem() {
         const name = document.getElementById("itemName").value;
         const store = document.getElementById("store").value;
-        const price = parseFloat(document.getElementById("price").value);
+        const priceValue = document.getElementById("price").value;
+        const price = priceValue ? parseFloat(priceValue) : null;
 
-        if (!name || isNaN(price)) {
-            alert("Enter item name and price");
+        if (!name) {
+            alert("Enter item name");
             return;
         }
 
@@ -212,6 +230,7 @@
         render();
 
         document.getElementById("itemName").value = "";
+        document.getElementById("store").value = "";
         document.getElementById("price").value = "";
     }
 
@@ -230,7 +249,10 @@
     async function shareList() {
         let text = "My Shopping List:\n\n";
         items.forEach(item => {
-            text += `• ${item.name} (${item.store || "No store"}) — ${selectedCurrency} ${item.price.toFixed(2)}\n`;
+            text += `• ${item.name}`;
+            if (item.store) text += ` (${item.store})`;
+            if (item.price) text += ` — ${selectedCurrency} ${item.price.toFixed(2)}`;
+            text += "\n";
         });
 
         if (navigator.share) {
@@ -242,9 +264,10 @@
     }
 
     function sendToExpenses() {
-        const checkedItems = items.filter(i => i.checked);
+        const checkedItems = items.filter(i => i.checked && i.price);
+
         if (checkedItems.length === 0) {
-            alert("No items checked!");
+            alert("No priced items checked!");
             return;
         }
 
@@ -308,6 +331,4 @@
 
 </body>
 </html>
-            
-        
                                     
