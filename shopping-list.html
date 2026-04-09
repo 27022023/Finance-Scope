@@ -31,13 +31,27 @@
             overflow-y: auto;
         }
 
-        input {
-            width: 90%;
+        input, select {
             padding: 12px;
-            margin: 10px 0;
             border-radius: 10px;
             border: none;
             font-size: 1.1rem;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            width: 90%;
+            margin: 10px auto;
+        }
+
+        input {
+            flex: 1;
+        }
+
+        select {
+            width: 90px;
         }
 
         button {
@@ -48,17 +62,6 @@
             font-size: 1.2rem;
             cursor: pointer;
             margin-top: 10px;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 12px 25px;
-            background-color: #f5e8c8;
-            border-radius: 20px;
-            border: none;
-            cursor: pointer;
         }
 
         .item, .wishlist-item {
@@ -92,14 +95,18 @@
 
 <body>
 
-<button class="back-btn" onclick="window.location.href='index.html'">⬅ Back</button>
-
 <div class="container">
     <h2>Shopping List</h2>
 
     <input type="text" id="store" placeholder="Store (e.g. Lidl, Aldi)">
+
     <input type="text" id="itemName" placeholder="Item name">
-    <input type="number" id="price" placeholder="Price (€)">
+
+    <div class="row">
+        <input type="number" id="price" placeholder="Price">
+        <select id="currency"></select>
+    </div>
+
     <button onclick="addItem()">Add Item</button>
 
     <div id="list"></div>
@@ -120,8 +127,42 @@
 </div>
 
 <script>
+    const currencies = ["EUR","USD","GBP","CHF","JPY","CNY","TRY","PLN","SEK","NOK","DKK","AUD","CAD"];
     let items = JSON.parse(localStorage.getItem("shoppingItems")) || [];
     let wishes = JSON.parse(localStorage.getItem("wishList")) || [];
+    let selectedCurrency = localStorage.getItem("currency") || "EUR";
+    let rates = {};
+
+    async function loadRates() {
+        const res = await fetch(`https://api.exchangerate.host/latest?base=EUR`);
+        const data = await res.json();
+        rates = data.rates;
+    }
+
+    function populateCurrencyDropdown() {
+        const dropdown = document.getElementById("currency");
+        dropdown.innerHTML = "";
+        currencies.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c;
+            opt.textContent = c;
+            if (c === selectedCurrency) opt.selected = true;
+            dropdown.appendChild(opt);
+        });
+    }
+
+    function convertAllPrices(newCurrency) {
+        const factor = rates[newCurrency] / rates[selectedCurrency];
+        items = items.map(i => ({ ...i, price: i.price * factor }));
+        selectedCurrency = newCurrency;
+        localStorage.setItem("currency", selectedCurrency);
+        save();
+        render();
+    }
+
+    document.getElementById("currency").addEventListener("change", e => {
+        convertAllPrices(e.target.value);
+    });
 
     function save() {
         localStorage.setItem("shoppingItems", JSON.stringify(items));
@@ -130,7 +171,7 @@
 
     function updateTotal() {
         let total = items.reduce((sum, item) => sum + (item.price || 0), 0);
-        document.getElementById("total").innerText = `Total: €${total.toFixed(2)}`;
+        document.getElementById("total").innerText = `Total: ${selectedCurrency} ${total.toFixed(2)}`;
     }
 
     function render() {
@@ -145,7 +186,7 @@
                 <input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleCheck(${index})">
                 <strong>${item.name}</strong><br>
                 <small>Store: ${item.store || "—"}</small><br>
-                <small>Price: €${item.price.toFixed(2)}</small>
+                <small>Price: ${selectedCurrency} ${item.price.toFixed(2)}</small>
                 <button class="delete-btn" onclick="deleteItem(${index})">Delete</button>
             `;
 
@@ -162,7 +203,7 @@
         const price = parseFloat(document.getElementById("price").value);
 
         if (!name || isNaN(price)) {
-            alert("Please enter an item name and price");
+            alert("Enter item name and price");
             return;
         }
 
@@ -189,7 +230,7 @@
     async function shareList() {
         let text = "My Shopping List:\n\n";
         items.forEach(item => {
-            text += `• ${item.name} (${item.store || "No store"}) — €${item.price}\n`;
+            text += `• ${item.name} (${item.store || "No store"}) — ${selectedCurrency} ${item.price.toFixed(2)}\n`;
         });
 
         if (navigator.share) {
@@ -202,14 +243,12 @@
 
     function sendToExpenses() {
         const checkedItems = items.filter(i => i.checked);
-
         if (checkedItems.length === 0) {
             alert("No items checked!");
             return;
         }
 
         const today = new Date().toISOString().split("T")[0];
-
         let imported = JSON.parse(localStorage.getItem("importExpenses")) || [];
 
         checkedItems.forEach(item => {
@@ -217,12 +256,12 @@
                 name: item.name,
                 amount: item.price,
                 category: item.store || "Shopping",
-                date: today
+                date: today,
+                currency: selectedCurrency
             });
         });
 
         localStorage.setItem("importExpenses", JSON.stringify(imported));
-
         alert(`${checkedItems.length} items sent to Expense Tracker!`);
     }
 
@@ -260,9 +299,15 @@
         renderWishes();
     }
 
-    render();
+    (async () => {
+        await loadRates();
+        populateCurrencyDropdown();
+        render();
+    })();
 </script>
 
 </body>
 </html>
+            
+        
                                     
