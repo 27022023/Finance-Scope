@@ -19,31 +19,37 @@
             align-items: center;
         }
 
+        /* NAVY LOGO TEXT ABOVE BANK */
+        .logo-text {
+            font-size: 40px;
+            font-weight: 700;
+            color: #0a1a3d; /* deep navy */
+            margin-bottom: 10px;
+            text-shadow: 0 0 12px rgba(255,255,255,0.7);
+        }
+
         /* HUGE BANK EMOJI */
         .big-emoji {
-            font-size: 260px; /* MASSIVE */
+            font-size: 300px; /* EVEN BIGGER */
             filter: drop-shadow(0 0 25px rgba(0,0,0,0.4))
                     drop-shadow(0 0 40px rgba(255,255,255,0.6));
-            margin-bottom: 40px;
+            margin-bottom: 60px;
         }
 
-        /* BIGGER MENU BUTTON */
-        .swipe-btn {
-            position: absolute;
-            bottom: 40px;
+        /* BIG NORMAL MENU BUTTON */
+        .menu-btn {
             background-color: #f5e8c8;
-            padding: 25px 45px; /* MUCH BIGGER */
+            padding: 25px 50px;
             border-radius: 40px;
             border: none;
-            font-size: 1.6rem; /* BIGGER TEXT */
+            font-size: 1.8rem;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 15px;
             box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+            position: absolute;
+            bottom: 40px;
         }
 
-        .swipe-btn:hover {
+        .menu-btn:hover {
             background-color: #f0dfb5;
         }
 
@@ -73,14 +79,18 @@
 
 <body>
 
+    <!-- NAVY LOGO TEXT -->
+    <div class="logo-text">Finance Scope</div>
+
     <!-- HUGE BANK EMOJI -->
     <div class="big-emoji">🏦</div>
 
     <!-- BIG MENU BUTTON -->
-    <button class="swipe-btn" onclick="openMenu()">
-        💸 Swipe to see the menu!
+    <button class="menu-btn" onclick="openMenu()">
+        Menu
     </button>
 
+    <!-- SLIDE-OUT MENU -->
     <div id="menu">
         <h2>Menu</h2>
         <div class="menu-item"><a href="currency.html">Currency Converter</a></div>
@@ -94,20 +104,6 @@
         function openMenu() {
             document.getElementById("menu").style.right = "0";
         }
-
-        // Swipe detection
-        let startX = 0;
-
-        document.addEventListener("touchstart", e => {
-            startX = e.touches[0].clientX;
-        });
-
-        document.addEventListener("touchend", e => {
-            let endX = e.changedTouches[0].clientX;
-            if (startX < endX - 50) {
-                openMenu();
-            }
-        });
     </script>
 
 </body>
