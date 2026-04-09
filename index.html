@@ -12,54 +12,62 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             font-family: Arial, sans-serif;
 
-            /* Soft grey → lavender-blue gradient */
-            background: linear-gradient(135deg, #e6e6e6, #c7c9ff, #a8b4ff);
-            background-size: 200% 200%;
-            animation: gradientMove 10s ease infinite;
+            /* Soft grey background */
+            background: #dcdcdc;
+            overflow: hidden;
         }
 
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Logo text */
-        .logo-text {
-            font-size: 2.4rem;
-            font-weight: 700;
-            color: #0A1A2F; /* deep navy */
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-
-        h1 {
-            color: #0A1A2F;
+        /* Title */
+        .title {
+            margin-top: 40px;
             font-size: 3rem;
-            font-weight: 600;
+            font-weight: 700;
+            color: #0A1A2F; /* deep navy blue */
             text-align: center;
-            margin-top: 0;
         }
 
-        .swipe-btn {
+        /* Bank image placeholder with engraved gold text */
+        .bank-image {
+            width: 260px;
+            height: 180px;
+            background: #ffffff;
+            border: 4px solid #b5b5b5;
+            border-radius: 10px;
+            margin-top: 20px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .bank-image::before {
+            content: "FINANCE SCOPE";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #d4af37; /* gold */
+            text-shadow: 
+                0 0 3px #b8860b,
+                0 0 6px #b8860b,
+                inset 0 0 5px #b8860b;
+        }
+
+        /* Menu button */
+        .menu-btn {
             position: absolute;
             bottom: 30px;
             padding: 15px 25px;
             background-color: #FFF5E1; /* cream */
             border: none;
             border-radius: 12px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: transform 0.2s ease;
-        }
-
-        .swipe-btn:hover {
-            transform: scale(1.05);
         }
 
         /* Menu panel */
@@ -96,16 +104,18 @@
 
 <body>
 
-    <!-- Logo text instead of image -->
-    <div class="logo-text">Finance Scope</div>
+    <!-- Title -->
+    <div class="title">FINANCE SCOPE</div>
 
-    <h1>Welcome</h1>
+    <!-- Bank image with engraved gold logo -->
+    <div class="bank-image"></div>
 
-    <button class="swipe-btn" onclick="openMenu()">
-        💸 Swipe to see the menu
+    <!-- Menu button -->
+    <button class="menu-btn" onclick="openMenu()">
+        Menu
     </button>
 
-    <!-- Menu Panel -->
+    <!-- Slide-up Menu -->
     <div id="menuPanel">
         <h2>Menu</h2>
 
@@ -119,10 +129,39 @@
     </div>
 
     <script>
+        const menu = document.getElementById("menuPanel");
+
         function openMenu() {
-            document.getElementById("menuPanel").style.bottom = "0";
+            menu.style.bottom = "0";
         }
+
+        function closeMenu() {
+            menu.style.bottom = "-100%";
+        }
+
+        /* Swipe Detection */
+        let startY = 0;
+        let endY = 0;
+
+        document.addEventListener("touchstart", function(e) {
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener("touchend", function(e) {
+            endY = e.changedTouches[0].clientY;
+
+            let swipeDistance = startY - endY;
+
+            if (swipeDistance > 80) {
+                openMenu();
+            }
+
+            if (swipeDistance < -80) {
+                closeMenu();
+            }
+        });
     </script>
 
 </body>
 </html>
+            
