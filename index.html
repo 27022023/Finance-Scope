@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Scope</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+
+            /* Soft grey → lavender-blue gradient */
+            background: linear-gradient(135deg, #e6e6e6, #c7c9ff, #a8b4ff);
+            background-size: 200% 200%;
+            animation: gradientMove 10s ease infinite;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Logo text */
+        .logo-text {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: #0A1A2F; /* deep navy */
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #0A1A2F;
+            font-size: 3rem;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .swipe-btn {
+            position: absolute;
+            bottom: 30px;
+            padding: 15px 25px;
+            background-color: #FFF5E1; /* cream */
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .swipe-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Menu panel */
+        #menuPanel {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background-color: #FFF5E1; /* cream */
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+            transition: bottom 0.4s ease;
+            padding: 20px;
+        }
+
+        #menuPanel h2 {
+            margin-top: 0;
+            color: #0A1A2F;
+            text-align: center;
+        }
+
+        .menu-item {
+            padding: 12px;
+            margin: 10px 0;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Logo text instead of image -->
+    <div class="logo-text">Finance Scope</div>
+
+    <h1>Welcome</h1>
+
+    <button class="swipe-btn" onclick="openMenu()">
+        💸 Swipe to see the menu
+    </button>
+
+    <!-- Menu Panel -->
+    <div id="menuPanel">
+        <h2>Menu</h2>
+
+        <div class="menu-item" onclick="location.href='currency.html'">Currency Converter</div>
+        <div class="menu-item" onclick="location.href='brutto-netto.html'">Brutto–Netto Calculator</div>
+        <div class="menu-item" onclick="location.href='expenses.html'">Expense Tracker</div>
+        <div class="menu-item" onclick="location.href='receipts.html'">Receipt Upload</div>
+        <div class="menu-item" onclick="location.href='shopping-list.html'">Shopping List</div>
+        <div class="menu-item" onclick="location.href='bills.html'">Bills & Payments</div>
+        <div class="menu-item" onclick="location.href='goals.html'">Savings Goals</div>
+    </div>
+
+    <script>
+        function openMenu() {
+            document.getElementById("menuPanel").style.bottom = "0";
+        }
+    </script>
+
+</body>
+</html>
