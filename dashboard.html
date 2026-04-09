@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Dashboard ✨</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f3e9d7;
+            font-family: Arial, sans-serif;
+            color: #4b3f32;
+        }
+
+        .menu-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            padding: 10px 20px;
+            background: #e8d7bd;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 70px;
+            font-size: 2rem;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .card {
+            background: #fff8ef;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .card.small {
+            display: inline-block;
+            width: 45%;
+            vertical-align: top;
+        }
+
+        .card h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.3rem;
+        }
+
+        .quick-actions button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 15px;
+            background: #e8d7bd;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<button class="menu-btn" onclick="window.location.href='index.html'">⬅ Menu</button>
+
+<h1>✨ Dashboard ✨</h1>
+
+<div class="container">
+
+    <div class="card">
+        <h2>📅 Monthly Summary</h2>
+        <p id="summaryText">Loading...</p>
+    </div>
+
+    <div class="card small">
+        <h2>💡 Bills Due</h2>
+        <p id="billsDue">0</p>
+    </div>
+
+    <div class="card small">
+        <h2>💸 Spending</h2>
+        <p id="spendingTotal">0</p>
+    </div>
+
+    <div class="card">
+        <h2>🛒 Shopping Items Left</h2>
+        <p id="shoppingLeft">0</p>
+    </div>
+
+    <div class="card small">
+        <h2>🎯 Budget Used</h2>
+        <p id="budgetUsed">0%</p>
+    </div>
+
+    <div class="card small">
+        <h2>🔔 Reminders</h2>
+        <p id="reminderCount">0</p>
+    </div>
+
+    <div class="card quick-actions">
+        <h2>⚡ Quick Actions</h2>
+        <button onclick="window.location.href='bills.html'">🏷 Add Bill</button>
+        <button onclick="window.location.href='expenses.html'">💸 Add Expense</button>
+        <button onclick="window.location.href='shopping.html'">🛒 Add Item</button>
+        <button onclick="window.location.href='charts.html'">📊 View Charts</button>
+    </div>
+
+</div>
+
+<script>
+    function loadDashboard() {
+        const bills = JSON.parse(localStorage.getItem("bills")) || [];
+        const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+        const shopping = JSON.parse(localStorage.getItem("shoppingList")) || [];
+        const budget = JSON.parse(localStorage.getItem("budget")) || { amount: 0 };
+
+        const today = new Date();
+
+        let billsDue = bills.filter(b => !b.paid && new Date(b.due) >= today).length;
+        let reminders = bills.filter(b => !b.paid && b.reminder !== "none").length;
+
+        let totalSpent = expenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+        let shoppingLeft = shopping.filter(i => !i.checked).length;
+
+        let budgetUsed = budget.amount > 0 ? Math.round((totalSpent / budget.amount) * 100) : 0;
+
+        document.getElementById("billsDue").innerText = billsDue;
+        document.getElementById("spendingTotal").innerText = totalSpent.toFixed(2);
+        document.getElementById("shoppingLeft").innerText = shoppingLeft;
+        document.getElementById("budgetUsed").innerText = budgetUsed + "%";
+        document.getElementById("reminderCount").innerText = reminders;
+
+        document.getElementById("summaryText").innerText =
+            `You have ${billsDue} bills due, spent €${totalSpent.toFixed(2)}, and have ${shoppingLeft} shopping items left.`;
+    }
+
+    loadDashboard();
+</script>
+
+</body>
+</html>
