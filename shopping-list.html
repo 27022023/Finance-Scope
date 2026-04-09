@@ -11,7 +11,7 @@
             padding: 0;
             font-family: Arial, sans-serif;
             height: 100vh;
-            background: #5a1a77; /* deep purple */
+            background: #5a1a77;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -31,7 +31,7 @@
             overflow-y: auto;
         }
 
-        input, select {
+        input {
             width: 90%;
             padding: 12px;
             margin: 10px 0;
@@ -50,24 +50,15 @@
             margin-top: 10px;
         }
 
-        button:hover {
-            background-color: #f0dfb5;
-        }
-
         .back-btn {
             position: absolute;
             top: 20px;
             left: 20px;
             padding: 12px 25px;
-            font-size: 1rem;
             background-color: #f5e8c8;
             border-radius: 20px;
             border: none;
             cursor: pointer;
-        }
-
-        .back-btn:hover {
-            background-color: #f0dfb5;
         }
 
         .item, .wishlist-item {
@@ -89,11 +80,6 @@
             border-radius: 10px;
             cursor: pointer;
             color: white;
-            font-size: 0.9rem;
-        }
-
-        .delete-btn:hover {
-            background: #ff4a4a;
         }
 
         #total {
@@ -106,145 +92,177 @@
 
 <body>
 
-    <button class="back-btn" onclick="window.location.href='index.html'">⬅ Back</button>
+<button class="back-btn" onclick="window.location.href='index.html'">⬅ Back</button>
 
-    <div class="container">
-        <h2>Shopping List</h2>
+<div class="container">
+    <h2>Shopping List</h2>
 
-        <input type="text" id="itemName" placeholder="Item name">
-        <input type="text" id="store" placeholder="Store (optional)">
-        <input type="number" id="price" placeholder="Price (€)">
-        <button onclick="addItem()">Add Item</button>
+    <input type="text" id="store" placeholder="Store (e.g. Lidl, Aldi)">
+    <input type="text" id="itemName" placeholder="Item name">
+    <input type="number" id="price" placeholder="Price (€)">
+    <button onclick="addItem()">Add Item</button>
 
-        <div id="list"></div>
+    <div id="list"></div>
 
-        <div id="total">Total: €0.00</div>
+    <div id="total">Total: €0.00</div>
 
-        <button onclick="shareList()">Share List</button>
+    <button onclick="sendToExpenses()">Send Checked Items to Expenses</button>
+    <button onclick="shareList()">Share List</button>
 
-        <hr style="margin: 25px 0; border: 1px solid rgba(255,255,255,0.3);">
+    <hr style="margin: 25px 0; border: 1px solid rgba(255,255,255,0.3);">
 
-        <h2>Wish List</h2>
+    <h2>Wish List</h2>
 
-        <input type="text" id="wishInput" placeholder="Wish item">
-        <button onclick="addWish()">Add to Wish List</button>
+    <input type="text" id="wishInput" placeholder="Wish item">
+    <button onclick="addWish()">Add to Wish List</button>
 
-        <div id="wishList"></div>
-    </div>
+    <div id="wishList"></div>
+</div>
 
-    <script>
-        let items = JSON.parse(localStorage.getItem("shoppingItems")) || [];
-        let wishes = JSON.parse(localStorage.getItem("wishList")) || [];
+<script>
+    let items = JSON.parse(localStorage.getItem("shoppingItems")) || [];
+    let wishes = JSON.parse(localStorage.getItem("wishList")) || [];
 
-        function save() {
-            localStorage.setItem("shoppingItems", JSON.stringify(items));
-            localStorage.setItem("wishList", JSON.stringify(wishes));
+    function save() {
+        localStorage.setItem("shoppingItems", JSON.stringify(items));
+        localStorage.setItem("wishList", JSON.stringify(wishes));
+    }
+
+    function updateTotal() {
+        let total = items.reduce((sum, item) => sum + (item.price || 0), 0);
+        document.getElementById("total").innerText = `Total: €${total.toFixed(2)}`;
+    }
+
+    function render() {
+        const list = document.getElementById("list");
+        list.innerHTML = "";
+
+        items.forEach((item, index) => {
+            const div = document.createElement("div");
+            div.className = "item";
+
+            div.innerHTML = `
+                <input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleCheck(${index})">
+                <strong>${item.name}</strong><br>
+                <small>Store: ${item.store || "—"}</small><br>
+                <small>Price: €${item.price.toFixed(2)}</small>
+                <button class="delete-btn" onclick="deleteItem(${index})">Delete</button>
+            `;
+
+            list.appendChild(div);
+        });
+
+        updateTotal();
+        renderWishes();
+    }
+
+    function addItem() {
+        const name = document.getElementById("itemName").value;
+        const store = document.getElementById("store").value;
+        const price = parseFloat(document.getElementById("price").value);
+
+        if (!name || isNaN(price)) {
+            alert("Please enter an item name and price");
+            return;
         }
 
-        function updateTotal() {
-            let total = items.reduce((sum, item) => sum + (item.price || 0), 0);
-            document.getElementById("total").innerText = `Total: €${total.toFixed(2)}`;
-        }
+        items.push({ name, store, price, checked: false });
+        save();
+        render();
 
-        function render() {
-            const list = document.getElementById("list");
-            list.innerHTML = "";
+        document.getElementById("itemName").value = "";
+        document.getElementById("price").value = "";
+    }
 
-            items.forEach((item, index) => {
-                const div = document.createElement("div");
-                div.className = "item";
+    function toggleCheck(index) {
+        items[index].checked = !items[index].checked;
+        save();
+        render();
+    }
 
-                div.innerHTML = `
-                    <input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleCheck(${index})">
-                    <strong>${item.name}</strong><br>
-                    <small>Store: ${item.store || "—"}</small><br>
-                    <small>Price: €${item.price.toFixed(2)}</small>
-                    <button class="delete-btn" onclick="deleteItem(${index})">Delete</button>
-                `;
+    function deleteItem(index) {
+        items.splice(index, 1);
+        save();
+        render();
+    }
 
-                list.appendChild(div);
-            });
+    async function shareList() {
+        let text = "My Shopping List:\n\n";
+        items.forEach(item => {
+            text += `• ${item.name} (${item.store || "No store"}) — €${item.price}\n`;
+        });
 
-            updateTotal();
-            renderWishes();
-        }
-
-        function addItem() {
-            const name = document.getElementById("itemName").value;
-            const store = document.getElementById("store").value;
-            const price = parseFloat(document.getElementById("price").value);
-
-            if (!name || isNaN(price)) {
-                alert("Please enter an item name and price");
-                return;
-            }
-
-            items.push({ name, store, price, checked: false });
-            save();
-            render();
-
-            document.getElementById("itemName").value = "";
-            document.getElementById("store").value = "";
-            document.getElementById("price").value = "";
-        }
-
-        function toggleCheck(index) {
-            items[index].checked = !items[index].checked;
-            save();
-            render();
-        }
-
-        function deleteItem(index) {
-            items.splice(index, 1);
-            save();
-            render();
-        }
-
-        function shareList() {
-            let text = "My Shopping List:\n\n";
-            items.forEach(item => {
-                text += `• ${item.name} (${item.store || "No store"}) — €${item.price}\n`;
-            });
+        if (navigator.share) {
+            await navigator.share({ title: "Shopping List", text });
+        } else {
             navigator.clipboard.writeText(text);
             alert("List copied to clipboard!");
         }
+    }
 
-        function addWish() {
-            const wish = document.getElementById("wishInput").value;
-            if (!wish) return;
+    function sendToExpenses() {
+        const checkedItems = items.filter(i => i.checked);
 
-            wishes.push(wish);
-            save();
-            renderWishes();
-
-            document.getElementById("wishInput").value = "";
+        if (checkedItems.length === 0) {
+            alert("No items checked!");
+            return;
         }
 
-        function renderWishes() {
-            const wishList = document.getElementById("wishList");
-            wishList.innerHTML = "";
+        const today = new Date().toISOString().split("T")[0];
 
-            wishes.forEach((wish, index) => {
-                const div = document.createElement("div");
-                div.className = "wishlist-item";
+        let imported = JSON.parse(localStorage.getItem("importExpenses")) || [];
 
-                div.innerHTML = `
-                    ${wish}
-                    <button class="delete-btn" onclick="deleteWish(${index})">Delete</button>
-                `;
-
-                wishList.appendChild(div);
+        checkedItems.forEach(item => {
+            imported.push({
+                name: item.name,
+                amount: item.price,
+                category: item.store || "Shopping",
+                date: today
             });
-        }
+        });
 
-        function deleteWish(index) {
-            wishes.splice(index, 1);
-            save();
-            renderWishes();
-        }
+        localStorage.setItem("importExpenses", JSON.stringify(imported));
 
-        render();
-    </script>
+        alert(`${checkedItems.length} items sent to Expense Tracker!`);
+    }
+
+    function addWish() {
+        const wish = document.getElementById("wishInput").value;
+        if (!wish) return;
+
+        wishes.push(wish);
+        save();
+        renderWishes();
+
+        document.getElementById("wishInput").value = "";
+    }
+
+    function renderWishes() {
+        const wishList = document.getElementById("wishList");
+        wishList.innerHTML = "";
+
+        wishes.forEach((wish, index) => {
+            const div = document.createElement("div");
+            div.className = "wishlist-item";
+
+            div.innerHTML = `
+                ${wish}
+                <button class="delete-btn" onclick="deleteWish(${index})">Delete</button>
+            `;
+
+            wishList.appendChild(div);
+        });
+    }
+
+    function deleteWish(index) {
+        wishes.splice(index, 1);
+        save();
+        renderWishes();
+    }
+
+    render();
+</script>
 
 </body>
 </html>
+                                    
