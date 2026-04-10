@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="icon_1775767952709.png">
-   <link rel="apple-touch-icon" href="icon_1775767952709.png">
+    <link rel="icon" type="image/png" href="icon_1775767952709.png">
+    <link rel="apple-touch-icon" href="icon_1775767952709.png">
     <title>Brutto-Netto Calculator</title>
 
     <style>
@@ -13,7 +13,7 @@
             padding: 0;
             font-family: Arial, sans-serif;
             height: 100vh;
-            background: #0a1a3d; /* deep navy */
+            background: #0a1a3d;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -99,6 +99,37 @@
             text-align: left;
             font-size: 0.95rem;
         }
+
+        /* INFO ICON */
+        .info-icon {
+            display: inline-block;
+            margin-left: 10px;
+            background: #f5e8c8;
+            color: #0a1a3d;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 1rem;
+            font-weight: bold;
+            line-height: 22px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        }
+
+        /* INFO POPUP */
+        .info-box {
+            display: none;
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            text-align: left;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 10;
+        }
     </style>
 </head>
 
@@ -107,7 +138,15 @@
     <button class="back-btn" onclick="window.location.href='index.html'">⬅ Back</button>
 
     <div class="container">
-        <h2>Brutto → Netto Calculator</h2>
+        <h2>
+            Brutto → Netto Calculator
+            <span class="info-icon" onclick="toggleInfo()">!</span>
+        </h2>
+
+        <div id="infoBox" class="info-box">
+            <strong>Brutto:</strong> Your salary before taxes and social contributions.<br><br>
+            <strong>Netto:</strong> The amount you actually receive in your bank account after all deductions.
+        </div>
 
         <input type="number" id="brutto" placeholder="Enter Brutto salary">
 
@@ -146,6 +185,27 @@
     </div>
 
     <script>
+        function toggleInfo() {
+            const box = document.getElementById("infoBox");
+            const isOpen = box.style.display === "block";
+
+            box.style.display = isOpen ? "none" : "block";
+
+            if (!isOpen) {
+                document.addEventListener("click", outsideClickHandler);
+            }
+        }
+
+        function outsideClickHandler(event) {
+            const box = document.getElementById("infoBox");
+            const icon = document.querySelector(".info-icon");
+
+            if (!box.contains(event.target) && !icon.contains(event.target)) {
+                box.style.display = "none";
+                document.removeEventListener("click", outsideClickHandler);
+            }
+        }
+
         function calculateNetto() {
             const bruttoInput = parseFloat(document.getElementById("brutto").value);
             const period = document.getElementById("period").value;
@@ -158,71 +218,51 @@
                 return;
             }
 
-            // Normalize to monthly for calculation
             const bruttoMonthly = period === "yearly" ? bruttoInput / 12 : bruttoInput;
 
-            // Social contributions (approx realistic)
-            const health = bruttoMonthly * 0.079;      // 7.9%
-            const pension = bruttoMonthly * 0.093;     // 9.3%
-            const unemployment = bruttoMonthly * 0.0125; // 1.25%
-            const care = bruttoMonthly * 0.01525;      // 1.525%
+            const health = bruttoMonthly * 0.079;
+            const pension = bruttoMonthly * 0.093;
+            const unemployment = bruttoMonthly * 0.0125;
+            const care = bruttoMonthly * 0.01525;
 
             const socialTotal = health + pension + unemployment + care;
 
-            // Base income tax rate by tax class (simplified)
             let baseRate = 0.20;
-            if (taxClass == 1) baseRate = 0.20;
             if (taxClass == 2) baseRate = 0.18;
             if (taxClass == 3) baseRate = 0.12;
-            if (taxClass == 4) baseRate = 0.20;
             if (taxClass == 5) baseRate = 0.28;
             if (taxClass == 6) baseRate = 0.32;
 
-            // Child reduction (very simplified: each child reduces effective tax rate slightly)
-            const childReduction = Math.min(children * 0.01, 0.05); // max 5% reduction
+            const childReduction = Math.min(children * 0.01, 0.05);
             const effectiveRate = Math.max(baseRate - childReduction, 0.05);
 
             const incomeTax = bruttoMonthly * effectiveRate;
-
-            // Solidarity surcharge
             const soli = incomeTax * 0.055;
-
-            // Church tax
             const churchTaxAmount = church ? incomeTax * 0.08 : 0;
 
             const totalDeductions = socialTotal + incomeTax + soli + churchTaxAmount;
             const nettoMonthly = bruttoMonthly - totalDeductions;
 
-            // Convert back to selected period
             const factor = period === "yearly" ? 12 : 1;
-            const bruttoFinal = bruttoMonthly * factor;
-            const nettoFinal = nettoMonthly * factor;
-            const healthFinal = health * factor;
-            const pensionFinal = pension * factor;
-            const unemploymentFinal = unemployment * factor;
-            const careFinal = care * factor;
-            const incomeTaxFinal = incomeTax * factor;
-            const soliFinal = soli * factor;
-            const churchFinal = churchTaxAmount * factor;
-            const totalDeductionsFinal = totalDeductions * factor;
 
             document.getElementById("result").innerHTML = `
                 <strong>Period:</strong> ${period === "monthly" ? "Monthly" : "Yearly"}<br><br>
-                <strong>Brutto:</strong> €${bruttoFinal.toFixed(2)}<br>
-                <strong>Netto:</strong> €${nettoFinal.toFixed(2)}<br><br>
-                <strong>Total Deductions:</strong> €${totalDeductionsFinal.toFixed(2)}<br><br>
+                <strong>Brutto:</strong> €${(bruttoMonthly * factor).toFixed(2)}<br>
+                <strong>Netto:</strong> €${(nettoMonthly * factor).toFixed(2)}<br><br>
+                <strong>Total Deductions:</strong> €${(totalDeductions * factor).toFixed(2)}<br><br>
                 <strong>Breakdown:</strong><br>
-                Health Insurance: €${healthFinal.toFixed(2)}<br>
-                Pension Insurance: €${pensionFinal.toFixed(2)}<br>
-                Unemployment Insurance: €${unemploymentFinal.toFixed(2)}<br>
-                Nursing Care: €${careFinal.toFixed(2)}<br>
-                Income Tax: €${incomeTaxFinal.toFixed(2)}<br>
-                Solidarity: €${soliFinal.toFixed(2)}<br>
-                Church Tax: €${churchFinal.toFixed(2)}<br>
-                Children (rate reduction): ${(childReduction * 100).toFixed(1)}% off tax rate
+                Health Insurance: €${(health * factor).toFixed(2)}<br>
+                Pension Insurance: €${(pension * factor).toFixed(2)}<br>
+                Unemployment Insurance: €${(unemployment * factor).toFixed(2)}<br>
+                Nursing Care: €${(care * factor).toFixed(2)}<br>
+                Income Tax: €${(incomeTax * factor).toFixed(2)}<br>
+                Solidarity: €${(soli * factor).toFixed(2)}<br>
+                Church Tax: €${(churchTaxAmount * factor).toFixed(2)}<br>
+                Children (rate reduction): ${(childReduction * 100).toFixed(1)}%
             `;
         }
     </script>
 
 </body>
 </html>
+                                    
